@@ -6,6 +6,9 @@ const port = 8055;
 // Store received OTPs
 let receivedOTPs = [];
 
+// OTP expiration time in milliseconds (90 seconds)
+const OTP_EXPIRATION_TIME = 90 * 1000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -32,9 +35,20 @@ app.get('/sendOTP', (req, res) => {
 
 // Endpoint to get all received OTPs
 app.get('/getOTPs', (req, res) => {
-    res.json(receivedOTPs);
+    const now = Date.now();
+    // Filter out OTPs older than 90 seconds
+    const validOTPs = receivedOTPs.filter(otp => {
+        const otpTime = new Date(otp.timestamp).getTime();
+        return (now - otpTime) <= OTP_EXPIRATION_TIME;
+    });
+    
+    // Update the stored OTPs to only include valid ones
+    receivedOTPs = validOTPs;
+    
+    res.json(validOTPs);
 });
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
+    console.log(`OTPs will expire after ${OTP_EXPIRATION_TIME/1000} seconds`);
 }); 
