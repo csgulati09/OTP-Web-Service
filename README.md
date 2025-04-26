@@ -147,5 +147,5 @@ Replace `<NGROK DOMAIN>` with your static domain from the NGROK dashboard.
 
 Use this domain in your iPhone Shortcuts automation when setting up the "Get Contents of URL" action.
 
-
-
+#
+# PLEASE DO NOT HOST IT PUBLICALLY FOR EVERYONE'S USE. KEEP IT RESTRICTED TO LOCAL SERVER ONLY.
