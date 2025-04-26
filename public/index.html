@@ -34,9 +34,15 @@
             border-bottom: 1px solid #eee;
             padding: 15px 0;
             transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .otp-item:hover {
             background-color: #f9f9f9;
+        }
+        .otp-content {
+            flex-grow: 1;
         }
         .timestamp {
             color: #666;
@@ -58,6 +64,26 @@
             color: #7f8c8d;
             padding: 20px;
         }
+        .copy-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+            margin-left: 15px;
+        }
+        .copy-button:hover {
+            background-color: #2980b9;
+        }
+        .copy-button.success {
+            background-color: #2ecc71;
+        }
+        .copy-button.error {
+            background-color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +95,42 @@
     </div>
 
     <script>
+        function extractOTP(text) {
+            const match = text.match(/\b(\d{4}|\d{6})\b/);
+            return match ? match[0] : null;
+        }
+
+        async function copyToClipboard(text, button) {
+            try {
+                const otp = extractOTP(text);
+                if (!otp) {
+                    button.textContent = 'No OTP found';
+                    button.classList.add('error');
+                    setTimeout(() => {
+                        button.textContent = 'Copy OTP';
+                        button.classList.remove('error');
+                    }, 2000);
+                    return;
+                }
+                
+                await navigator.clipboard.writeText(otp);
+                button.textContent = 'Copied!';
+                button.classList.add('success');
+                setTimeout(() => {
+                    button.textContent = 'Copy OTP';
+                    button.classList.remove('success');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                button.textContent = 'Failed to copy';
+                button.classList.add('error');
+                setTimeout(() => {
+                    button.textContent = 'Copy OTP';
+                    button.classList.remove('error');
+                }, 2000);
+            }
+        }
+
         async function loadOTPs() {
             try {
                 const response = await fetch('/getOTPs');
@@ -88,11 +150,16 @@
                 otpList.innerHTML = sortedOtps.map(otp => {
                     const otpValue = otp.data.otp || 'No OTP value';
                     const source = otp.data.source || 'Unknown source';
+                    const hasValidOTP = extractOTP(otpValue) !== null;
+                    
                     return `
                         <div class="otp-item">
-                            <div class="timestamp">${new Date(otp.timestamp).toLocaleString()}</div>
-                            <div class="otp-value">${otpValue}</div>
-                            <div class="source">From: ${source}</div>
+                            <div class="otp-content">
+                                <div class="timestamp">${new Date(otp.timestamp).toLocaleString()}</div>
+                                <div class="otp-value">${otpValue}</div>
+                                <div class="source">From: ${source}</div>
+                            </div>
+                            ${hasValidOTP ? `<button class="copy-button" onclick="copyToClipboard('${otpValue}', this)">Copy OTP</button>` : ''}
                         </div>
                     `;
                 }).join('');
