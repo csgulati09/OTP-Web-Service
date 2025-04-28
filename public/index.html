@@ -3,99 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Collector</title>
+    <title>OTP Web Service</title>
     <link rel="icon" type="image/png" href="otp.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --font-size-base: 16px;
+            --font-size-sm: 0.875rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 2rem;
+            --line-height-tight: 1.25;
+            --line-height-normal: 1.5;
+            --letter-spacing-tight: -0.025em;
+            --letter-spacing-normal: 0;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --success-color: #34d399;
+            --error-color: #f87171;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --bg-primary: #1f2937;
+            --bg-secondary: #111827;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-normal);
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 2rem;
         }
-        .container {
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
         }
+
+        .header-content {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+        }
+
+        .header h1 {
+            font-size: var(--font-size-3xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: var(--letter-spacing-tight);
+            line-height: var(--line-height-tight);
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-primary);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
         .display-section {
-            background-color: white;
-            border: 1px solid #ddd;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-        }
-        .otp-item {
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
-            transition: background-color 0.2s;
+
+        .section-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .otp-item:hover {
-            background-color: #f9f9f9;
+
+        .section-header h2 {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: var(--letter-spacing-tight);
         }
+
+        .refresh-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            transform-origin: center;
+        }
+
+        .refresh-button:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            transform: rotate(180deg);
+        }
+
+        .refresh-button:active {
+            transform: scale(0.9) rotate(180deg);
+        }
+
+        .refresh-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        #otpList {
+            padding: 0;
+        }
+
+        .otp-item {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .otp-item:last-child {
+            border-bottom: none;
+        }
+
+        .otp-item:hover {
+            background-color: var(--bg-secondary);
+        }
+
         .otp-content {
             flex-grow: 1;
         }
+
         .timestamp {
-            color: #666;
-            font-size: 0.8em;
-            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            letter-spacing: var(--letter-spacing-normal);
         }
+
         .otp-value {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 5px 0;
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0.25rem 0;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', monospace;
         }
+
         .source {
-            color: #7f8c8d;
-            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            margin-top: 0.25rem;
         }
+
         .no-otps {
             text-align: center;
-            color: #7f8c8d;
-            padding: 20px;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: var(--font-size-lg);
+            font-weight: 500;
         }
+
         .copy-button {
-            background-color: #3498db;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.2s;
-            margin-left: 15px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-left: 1rem;
+            min-width: 100px;
+            letter-spacing: var(--letter-spacing-normal);
         }
+
         .copy-button:hover {
-            background-color: #2980b9;
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
+
         .copy-button.success {
-            background-color: #2ecc71;
+            background-color: var(--success-color);
         }
+
         .copy-button.error {
-            background-color: #e74c3c;
+            background-color: var(--error-color);
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: var(--font-size-2xl);
+            }
+
+            .otp-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .copy-button {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer a:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>OTP Web Service</h1>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: none;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
         <div class="display-section">
-            <h2>Received OTPs</h2>
+            <div class="section-header">
+                <h2>Incoming OTPs</h2>
+                <button class="refresh-button" id="refreshButton" aria-label="Refresh OTPs">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
             <div id="otpList"></div>
         </div>
+        <footer class="footer">
+            Built by <a href="https://x.com/hey_csg" target="_blank" rel="noopener noreferrer">hey_csg</a>
+        </footer>
     </div>
 
     <script>
+        // Theme handling
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        // Initialize theme based on system preference or saved preference
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                setTheme(prefersDark ? 'dark' : 'light');
+            }
+        }
+
+        // Add event listener for theme toggle
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        // Initialize theme on page load
+        initializeTheme();
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
         function extractOTP(text) {
             const match = text.match(/\b(\d{4}|\d{6})\b/);
             return match ? match[0] : null;
@@ -172,6 +449,9 @@
         // Load OTPs initially and refresh every 5 seconds
         loadOTPs();
         // setInterval(loadOTPs, 5000);
+
+        // Add event listener for refresh button
+        document.getElementById('refreshButton').addEventListener('click', loadOTPs);
     </script>
 </body>
 </html> 
