@@ -210,6 +210,16 @@
             font-family: 'Inter', monospace;
         }
 
+        .otp-number {
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: color 0.2s ease;
+        }
+
+        .otp-number:hover {
+            opacity: 0.8;
+        }
+
         .source {
             color: var(--text-secondary);
             font-size: var(--font-size-sm);
@@ -250,6 +260,31 @@
         }
 
         .copy-button.error {
+            background-color: var(--error-color);
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            color: white;
+            background-color: var(--success-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .alert.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .alert.error {
             background-color: var(--error-color);
         }
 
@@ -298,6 +333,7 @@
 </head>
 <body>
     <div class="container">
+        <div class="alert" id="alert"></div>
         <div class="header">
             <div class="header-content">
                 <h1>OTP Web Service</h1>
@@ -382,31 +418,26 @@
             try {
                 const otp = extractOTP(text);
                 if (!otp) {
-                    button.textContent = 'No OTP found';
-                    button.classList.add('error');
-                    setTimeout(() => {
-                        button.textContent = 'Copy OTP';
-                        button.classList.remove('error');
-                    }, 2000);
+                    showAlert('No OTP found', true);
                     return;
                 }
                 
                 await navigator.clipboard.writeText(otp);
-                button.textContent = 'Copied!';
-                button.classList.add('success');
-                setTimeout(() => {
-                    button.textContent = 'Copy OTP';
-                    button.classList.remove('success');
-                }, 2000);
+                showAlert('OTP copied to clipboard!');
             } catch (err) {
                 console.error('Failed to copy:', err);
-                button.textContent = 'Failed to copy';
-                button.classList.add('error');
-                setTimeout(() => {
-                    button.textContent = 'Copy OTP';
-                    button.classList.remove('error');
-                }, 2000);
+                showAlert('Failed to copy OTP', true);
             }
+        }
+
+        function showAlert(message, isError = false) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                alert.className = 'alert';
+            }, 2000);
         }
 
         async function loadOTPs() {
@@ -429,12 +460,18 @@
                     const otpValue = otp.data.otp || 'No OTP value';
                     const source = otp.data.source || 'Unknown source';
                     const hasValidOTP = extractOTP(otpValue) !== null;
+                    const otpNumber = hasValidOTP ? extractOTP(otpValue) : null;
+                    
+                    let displayText = otpValue;
+                    if (hasValidOTP) {
+                        displayText = otpValue.replace(otpNumber, `<span class="otp-number" onclick="copyToClipboard('${otpValue}', this)">${otpNumber}</span>`);
+                    }
                     
                     return `
                         <div class="otp-item">
                             <div class="otp-content">
                                 <div class="timestamp">${new Date(otp.timestamp).toLocaleString()}</div>
-                                <div class="otp-value">${otpValue}</div>
+                                <div class="otp-value">${displayText}</div>
                                 <div class="source">From: ${source}</div>
                             </div>
                             ${hasValidOTP ? `<button class="copy-button" onclick="copyToClipboard('${otpValue}', this)">Copy OTP</button>` : ''}
