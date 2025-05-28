@@ -117,6 +117,38 @@
             height: 24px;
         }
 
+        .notification-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-right: 1rem;
+        }
+
+        .notification-toggle:hover {
+            background-color: var(--bg-primary);
+            transform: scale(1.05);
+        }
+
+        .notification-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .notification-toggle.enabled {
+            color: var(--primary-color);
+        }
+
+        .notification-toggle.disabled {
+            color: var(--text-secondary);
+        }
+
         .display-section {
             background-color: var(--bg-primary);
             border-radius: 12px;
@@ -338,6 +370,11 @@
             <div class="header-content">
                 <h1>OTP Web Service</h1>
             </div>
+            <button class="notification-toggle disabled" id="notificationToggle" aria-label="Toggle notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            </button>
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                 <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -440,6 +477,58 @@
             }, 2000);
         }
 
+        // Notification handling
+        let lastOTPCount = 0;
+        let notificationsEnabled = false;
+
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    notificationsEnabled = true;
+                    document.getElementById('notificationToggle').classList.remove('disabled');
+                    document.getElementById('notificationToggle').classList.add('enabled');
+                    showAlert('Notifications enabled!');
+                } else {
+                    notificationsEnabled = false;
+                    document.getElementById('notificationToggle').classList.remove('enabled');
+                    document.getElementById('notificationToggle').classList.add('disabled');
+                    showAlert('Please enable notifications in your browser settings', true);
+                }
+            } catch (error) {
+                console.error('Error requesting notification permission:', error);
+                showAlert('Failed to enable notifications', true);
+            }
+        }
+
+        function toggleNotifications() {
+            if (notificationsEnabled) {
+                notificationsEnabled = false;
+                document.getElementById('notificationToggle').classList.remove('enabled');
+                document.getElementById('notificationToggle').classList.add('disabled');
+                showAlert('Notifications disabled');
+            } else {
+                requestNotificationPermission();
+            }
+        }
+
+        function sendNotification(otp) {
+            if (!notificationsEnabled) return;
+
+            const notification = new Notification('New OTP Received', {
+                body: `OTP: ${otp.data.otp}\nFrom: ${otp.data.source}`,
+                icon: '/otp.png'
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+            };
+        }
+
+        // Add event listener for notification toggle
+        document.getElementById('notificationToggle').addEventListener('click', toggleNotifications);
+
         async function loadOTPs() {
             try {
                 const response = await fetch('/getOTPs');
@@ -448,8 +537,16 @@
                 
                 if (otps.length === 0) {
                     otpList.innerHTML = '<div class="no-otps">No OTPs received yet</div>';
+                    lastOTPCount = 0;
                     return;
                 }
+
+                // Check for new OTPs and send notifications
+                if (notificationsEnabled && otps.length > lastOTPCount) {
+                    const newOtps = otps.slice(0, otps.length - lastOTPCount);
+                    newOtps.forEach(otp => sendNotification(otp));
+                }
+                lastOTPCount = otps.length;
 
                 // Sort OTPs by timestamp in descending order (newest first)
                 const sortedOtps = [...otps].sort((a, b) => 
@@ -485,7 +582,7 @@
 
         // Load OTPs initially and refresh every 5 seconds
         loadOTPs();
-        // setInterval(loadOTPs, 5000);
+        setInterval(loadOTPs, 5000);
 
         // Add event listener for refresh button
         document.getElementById('refreshButton').addEventListener('click', loadOTPs);
